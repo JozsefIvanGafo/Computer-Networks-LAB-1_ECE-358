@@ -40,3 +40,5 @@ class LAB_1():
         print(f"Variance of generated random variables: {variance}")
         print(f"Expected mean for λ=75: {expected_mean}")
         print(f"Expected variance for λ=75: {expected_variance}")
+a=LAB_1()
+a.question1()
