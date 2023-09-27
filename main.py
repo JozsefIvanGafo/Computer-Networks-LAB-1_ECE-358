@@ -1,12 +1,14 @@
 """
-University of Waterloo Fall 2023 ECE-358 LAB-1  
+University of Waterloo Fall 2023 ECE-358 LAB-1  Group 151
 József IVÁN GAFO (21111635) jivangaf@uwaterloo.ca
-Sonia NAVAS RUTETE (21111397) 
+Sonia NAVAS RUTETE (21111397) srutete@uwaterloo.ca
 V 1:0
 In this module we will write the main code
 """
 
 #Imports
+import math
+import random
 import numpy as np
 
 class Lab1():
@@ -34,10 +36,15 @@ class Lab1():
         expected_variance = 1 / (lambda_param ** 2)
 
         # We generate 1000 exponential random variables
-        random_variables = np.random.exponential(scale=expected_mean, size=1000)
-        # Calculate the mean and variance of the generated random variables
-        mean = np.mean(random_variables)
-        variance = np.var(random_variables)
+        generated_numbers=[]
+        for _ in range(1000):
+            #Generate a number between [0,1)
+            random_number=random.random()
+            #We add the new generated number to the list
+            generated_numbers.append(-expected_mean*math.log(1-random_number))
+
+        mean=np.mean(generated_numbers)
+        variance=np.var(generated_numbers)
 
         # Print the results
         print(f"Mean of generated random variables: {mean}")
