@@ -49,7 +49,7 @@ class Lab1():
         print(f"Variance of generated random variables: {variance}")
         print(f"Expected variance for λ=75: {expected_variance}")
 
-    def m_m_1_queue(self, avg_len: float, trans_rate: float) -> None:
+    def m_m_1_queue(self, avg_len: float, trans_rate: float, lambda_parameter2: float) -> None:
         """
         Build your simulator for this queue and explain in words what you have done. Show your code in the report. In 
         particular, define your variables. Should there be a need, draw diagrams to show your program structure. Explain how you 
@@ -71,7 +71,8 @@ class Lab1():
 
         # We generate 1000 exponential random variables
         # that represent the times that the packets arrived
-        arrival_packets = self.generate_exp_distribution(self.__lambda_param, 1000)
+        arrival_packets = self.generate_exp_distribution(
+            lambda_parameter2, 1000)
         arrival_packets.sort()
 
         # We generate the packet size for every packet that arrived
@@ -82,31 +83,32 @@ class Lab1():
         for packet in length_packets:
             transmission_times.append(packet / trans_rate)
 
-        #List where we will store all the departures times
+        # List where we will store all the departures times
         departure_list = []
-        #Variable that tells us the time we are in the queue
-        queue_time=0
-        #Loop that calculates how the time of departure for each packet
+        # Variable that tells us the time we are in the queue
+        queue_time = 0
+        # Loop that calculates how the time of departure for each packet
         for count, arrival_packet_time in enumerate(arrival_packets):
-    
-            #If the queue is idle we just sum the arrival time +transmission [count] and we add it to the list
-            if queue_time< arrival_packet_time:
-                departure_time=arrival_packet_time+transmission_times[count]
+
+            # If the queue is idle we just sum the arrival time +transmission [count] and we add it to the list
+            if queue_time < arrival_packet_time:
+                departure_time = arrival_packet_time+transmission_times[count]
                 departure_list.append(departure_time)
-            #Else there is a queue, and we add the last package  departure time (count-1)  + the transmission[count] 
+            # Else there is a queue, and we add the last package  departure time (count-1)  + the transmission[count]
             else:
-                departure_time= departure_list[count-1]+transmission_times[count]
+                departure_time = departure_list[count-1] + \
+                    transmission_times[count]
                 departure_list.append(departure_time)
-            #We update the queue time of the queue, with the las departured time
-            queue_time=departure_time
-        
-        
-        #We generate the observers
-        observer_list = self.generate_exp_distribution(self.__lambda_param*5, 1000)
+            # We update the queue time of the queue, with the las departured time
+            queue_time = departure_time
+
+        # We generate the observers
+        observer_list = self.generate_exp_distribution(
+            lambda_parameter2*5, 1000)
         observer_list.sort()
 
-        #We join all the list while we add its type ("A"=arrival,"D"=departure and "O"=observer)
-        """result_list = []
+        # We join all the list while we add its type ("A"=arrival,"D"=departure and "O"=observer)
+        result_list = []
         for arrival_time in arrival_packets:
             result_list.append(["A", arrival_time])
         for departure_time in departure_list:
@@ -117,9 +119,7 @@ class Lab1():
         sorted_list = sorted(result_list, key=lambda x: x[1])
 
         num_idle = 0
-        avg_packets_in_queue = []"""
-        """
-        # FIXME:
+        avg_packets_in_queue = []
         for count, element,  in enumerate(sorted_list):
             if element[0]=="A":
                 num_arrival+=1
@@ -135,51 +135,51 @@ class Lab1():
                 #TODO: E[N] = time average of packets in the queue
                 #TODO:PIDLE = The proportion of time the server is idle, i.e., no packets in the queue nor a packet is being transmitted
                 #TODO:PLOSS = As it is infinite we don't lose packets
-                """
-        
-        #total_avg = 0 # E[N]
-        #for e in avg_packets_in_queue:
+                
+
+        # total_avg = 0 # E[N]
+        # for e in avg_packets_in_queue:
         #    total_avg += e
         #total_avg = total_avg/len(avg_packets_in_queue)
-
 
         # while sorted_list[i][1]< 1:
         #     if sorted_list[i][0] == "O" :
         #         break
-        avg_packets_in_queue=[]
-        sorted_list=[]
-        num_idle=0
+        """avg_packets_in_queue = []
+        sorted_list = []
+        num_idle = 0
         num_arrival = 0
         num_departed = 0
         num_observers = 0
-        while num_arrival<1000 and num_departed<1000 and num_observers<1000:
-            #We register the time of every list
-            arrival=arrival_packets[num_arrival]
-            observers=observer_list[num_observers]
-            departed=departure_list[num_departed]
-            #Conditionals
-            if arrival<min(observers,departed):
-                num_arrival+=1
-                sorted_list.append(["A",arrival])
-            elif departed <min(arrival,observers):
-                num_departed+=1
-                sorted_list.append(["D",departed])
+        while num_arrival < 1000 and num_departed < 1000 and num_observers < 1000:
+            # We register the time of every list
+            arrival = arrival_packets[num_arrival]
+            observers = observer_list[num_observers]
+            departed = departure_list[num_departed]
+            # Conditionals
+            if arrival < min(observers, departed):
+                num_arrival += 1
+                sorted_list.append(["A", arrival])
+            elif departed < min(arrival, observers):
+                num_departed += 1
+                sorted_list.append(["D", departed])
             else:
-                if num_arrival-num_departed== 0:
+                if num_arrival-num_departed == 0:
                     num_idle += 1
                 else:
                     avg_packets_in_queue.append(num_arrival-num_departed)
-                num_observers+=1
-                sorted_list.append(["O",observers])
-                
-        total_avg = 0 # E[N]
-        for e in avg_packets_in_queue:
-            total_avg += e
-        total_avg = total_avg/len(avg_packets_in_queue)
-        
-        
+                num_observers += 1
+                sorted_list.append(["O", observers])"""
+
+        total_avg = 0  # E[N]
+        if(len(avg_packets_in_queue) > 0):
+            for e in avg_packets_in_queue:
+                total_avg += e
+            total_avg = total_avg/len(avg_packets_in_queue)
+        return total_avg
 
     # Auxiliary methods
+
     def generate_exp_distribution(self, lambda_param: int, size: int) -> list:
         """
         This method is in charge of generating exponential random variables
@@ -199,7 +199,27 @@ class Lab1():
         return generated_numbers
 
 
+def generate_graph_points(avg_packet_length, trans_rate):
+    step = 0.1
+    start = 0.25 + step
+    end = 0.95
+
+    result = []
+
+    i = start
+    while i < end:
+        lambda_para = trans_rate * i / avg_packet_length
+        result.append(
+            [i, a.m_m_1_queue(avg_packet_length, trans_rate, lambda_para)])
+        i += step
+
+    for e in result:
+        print(e)
+
+
 a = Lab1(75)
 a.question1()
-trans_rate=1000*1000000
-a.m_m_1_queue(2000,trans_rate)
+trans_rate = 1000*1000000
+avg_packet_length = 2000
+
+generate_graph_points(avg_packet_length, trans_rate)
