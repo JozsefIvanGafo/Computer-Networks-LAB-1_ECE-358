@@ -24,3 +24,30 @@ Always when reporting, put your code on the appendix at the end of the code (not
  
  eceubutu allows us so that we can se what the TA's expect when they run our code
  submit files individually not in zip and tar. Prepare everything in one file
+
+
+        avg_packets_in_queue = []
+        sorted_list = []
+        num_idle = 0
+        num_arrival = 0
+        num_departed = 0
+        num_observers = 0
+        while num_arrival < 1000 and num_departed < 1000 and num_observers < 1000:
+            # We register the time of every list
+            arrival = arrival_packets[num_arrival]
+            observers = observer_list[num_observers]
+            departed = departure_list[num_departed]
+            # Conditionals
+            if arrival < min(observers, departed):
+                num_arrival += 1
+                sorted_list.append(["A", arrival])
+            elif departed < min(arrival, observers):
+                num_departed += 1
+                sorted_list.append(["D", departed])
+            else:
+                if num_arrival-num_departed == 0:
+                    num_idle += 1
+                else:
+                    avg_packets_in_queue.append(num_arrival-num_departed)
+                num_observers += 1
+                sorted_list.append(["O", observers])
