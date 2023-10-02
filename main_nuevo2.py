@@ -65,45 +65,28 @@ class Lab1():
         """
         # Reset event_list values
         self.__event_list=[]
+        self.__arrival_list=[]
+        self.__departure_list=[]
         
-        #Counter variables
-        
-
         #Variable for iterations
         queue=[-1]
         simulation_time = 0
         delay_time = 0
         i=0
-        #We generate departure, arrival events
 
-        #Loop where we will generate the arrivals and departures event
         while simulation_time < T:
-            #We generate an arrival time and we sum it with simulation_time
             arrival_timestamp = self.__generate_exp_distribution(lambda_par)+simulation_time
-
-            #FIXME:Why lambda =avg_len and the divide it ??? (on main.py)
-            departure_exp_dist=self.__generate_exp_distribution(avg_len)#/trans_rate
-            
-            #If the previous departure time is bigger it means, that the queue is not idle
-            if arrival_timestamp<queue[0]:
-                #So we add the departure of the previous packet plus the departure exp dist
-                departure_timestamp=queue.pop(0)+departure_exp_dist
-                #We add it to the queue
-                queue.append(departure_timestamp)
-            #It means that the queue is idle so the departure timestamp is the arrival + departure time
-            else:
-                queue.pop(0)
-                #We sum simulation time so we register events until T seconds
-                departure_timestamp=arrival_timestamp+departure_exp_dist
-                queue.append(departure_timestamp)
-            
-            #We update the simulation time
+            self.__arrival_list.append(arrival_timestamp)
             simulation_time = arrival_timestamp
-            #We check that we didn't exceeded the simulation time
-            if simulation_time<T and departure_timestamp<T:
-                #We add it to the event list
-                self.__add_event(ARRIVAL,arrival_timestamp)
-                self.__add_event(DEPARTURE,departure_timestamp)
+        self.__arrival_list.sort()
+
+        
+
+
+        for i in range(len(self.__arrival_list)):
+            self.__departure_list.append(self.__generate_exp_distribution(lambda_par))
+
+
 
         #Now we add the observers event
         simulation_time=0
