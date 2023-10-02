@@ -79,12 +79,35 @@ class Lab1():
             self.__arrival_list.append(arrival_timestamp)
             simulation_time = arrival_timestamp
         self.__arrival_list.sort()
+        length_packets = []
 
-        
+
+        for _ in range(len(self.__arrival_list)):
+            length_packets.append(self.generate_exp_distribution(1/avg_len))
+
+        transmission_times = []
+        for packet in length_packets:
+            transmission_times.append(packet / trans_rate)
+
+             
 
 
-        for i in range(len(self.__arrival_list)):
-            self.__departure_list.append(self.__generate_exp_distribution(lambda_par))
+        queue_time = 0
+        departure_time = 0
+        # Loop that calculates how the time of departure for each packet
+        for count, arrival_packet_time in enumerate(self.__arrival_list):
+
+            # If the queue is idle we just sum the arrival time +transmission [count] and we add it to the list
+            if queue_time < arrival_packet_time:
+                departure_time = arrival_packet_time+transmission_times[count]
+                self.__departure_list.append(departure_time)
+            # Else there is a queue, and we add the last package  departure time (count-1)  + the transmission[count]
+            else:
+                departure_time = self.__departure_list[count-1] + \
+                    transmission_times[count]
+                self.__departure_list.append(departure_time)
+            # We update the queue time of the queue, with the las departured time
+            queue_time = departure_time
 
 
 
@@ -98,8 +121,7 @@ class Lab1():
                 self.__add_event(OBSERVER,observation_timestamp)
                 simulation_time=observation_timestamp
                 #We sum into de delay
-                #TODO: delay_time+=departure_timestamp-arrival_timestamp
-
+        
         # We sort the event list
         self.__event_list = sorted(self.__event_list, key=lambda x:x[1])
 

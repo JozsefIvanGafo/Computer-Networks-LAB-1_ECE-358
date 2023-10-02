@@ -139,6 +139,7 @@ class Lab1():
                 if self.__num_arrival==self.__num_departed:
                     total_observer_idles += 1
         
+
         return total_num_packs_queue/self.__num_observers, total_observer_idles/self.__num_observers
     
 
@@ -188,7 +189,17 @@ def generate_graph_points(avg_packet_length, trans_rate, t):
     for e in result:
         print(e)
 
+"""
+P LOSS= num packets drop/ packets arrived
+we don't have to create the packets on the fly,
+we can create the arrivals and the observers as previously but we have to be carefull with w¡the departures
+suppose we are runnin the first T, then for the next t(2t), p idle and p loss cannot be a difference of 5%
 
+Si para k= 10 obtenemos una T: cogemos la misma para el resto de K
+
+take the t highest one with the lowest difference
+
+"""
 
 if __name__=="__main__":
     a = Lab1()
