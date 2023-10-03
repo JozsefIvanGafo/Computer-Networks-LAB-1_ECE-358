@@ -227,16 +227,15 @@ class Lab1():
 
                         if(event_list[0][1] > departure_timestamp):
                             index = 0
-                    else:
-                        for i in range(len(event_list)):
-                            in_list = event_list[i][1]
-                            in_list2 = event_list[i+1][1]
+                        else:
+                            for i in range(len(event_list)):
+                                in_list = event_list[i][1]
+                                in_list2 = event_list[i+1][1]
 
-                            if in_list <= departure_timestamp and departure_timestamp <= in_list2:
-                                index = i+1
-                                break
-                    
-                    event_list.insert(index, ["D",departure_timestamp])
+                                if in_list <= departure_timestamp and departure_timestamp <= in_list2:
+                                    index = i+1
+                                    break                   
+                        event_list.insert(index, ["D",departure_timestamp])
                     
                     
                     # event_list.append(["D",departure_timestamp])
