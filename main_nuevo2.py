@@ -221,8 +221,26 @@ class Lab1():
                         # Queue with packets
                         departure_timestamp = last_departure_time + event[2]
                     num_elem_queue+=1
-                    event_list.append(["D",departure_timestamp])
-                    event_list = sorted(event_list, key=lambda x: x[1])
+                    index = 0
+                    if(event_list):
+
+
+                        if(event_list[0][1] > departure_timestamp):
+                            index = 0
+                    else:
+                        for i in range(len(event_list)):
+                            in_list = event_list[i][1]
+                            in_list2 = event_list[i+1][1]
+
+                            if in_list <= departure_timestamp and departure_timestamp <= in_list2:
+                                index = i+1
+                                break
+                    
+                    event_list.insert(index, ["D",departure_timestamp])
+                    
+                    
+                    # event_list.append(["D",departure_timestamp])
+                    # event_list = sorted(event_list, key=lambda x: x[1])
                     
                 else:
                     # Queue full
@@ -240,7 +258,7 @@ class Lab1():
                     total_observer_idles += 1
 
         print("total_num_packs = "+ str(total_num_packs_queue))
-        print("idles total= " +  str(total_num_packs_queue))
+        print("idles total= " +  str(total_observer_idles))
         print("Total observers= "+str(num_observers))
         print("Total arrivals= "+str(num_arrival))
         print("Total departures= "+str(num_departed))
