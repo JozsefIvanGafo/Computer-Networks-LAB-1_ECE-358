@@ -63,7 +63,7 @@ class Lab1():
         @return: None
         """
         # ! Declaration of variables for the m_m_1 queue
-        num_arrival = 0 
+        num_arrival = 0
         num_departed = 0
         num_observers = 0
         transmission_times = []
@@ -73,29 +73,20 @@ class Lab1():
         event_list = []
         result_list = []
 
-
         # * Arrival
-        # Variable for iterations
-        simulation_time = 0
+
         # we generate the arrivals
-        while simulation_time < T:
-            arrival_timestamp = self.__generate_exp_distribution(
-                lambda_par)+simulation_time
-            arrival_list.append(arrival_timestamp)
-            simulation_time = arrival_timestamp
+        arrival_list = self.__generate_mm1_arr_obs(lambda_par, T)
         arrival_list.sort()
         length_packets = []
 
         # We create the packet size for each arrival
-        length_arrival=len(arrival_list)
-        length_packets=[self.__generate_exp_distribution(1/avg_len) for _ in range(length_arrival)]
-        #for _ in range(len(arrival_list)):
-            # FIXME: COMPROBAR QUE ESTE BIEN
-
-           # length_packets.append(self.__generate_exp_distribution(1/avg_len))
+        length_arrival = len(arrival_list)
+        length_packets = [self.__generate_exp_distribution(
+            1/avg_len) for _ in range(length_arrival)]
 
         # How much time it takes to process each packet
-        
+
         for packet in length_packets:
             transmission_times.append(packet / trans_rate)
 
@@ -118,15 +109,8 @@ class Lab1():
             queue_time = departure_time
 
         # Now we add the observers event
-        simulation_time = 0
-        while simulation_time < T:
-            observation_timestamp = self.__generate_exp_distribution(lambda_par*5)+simulation_time
-            observer_list.append(observation_timestamp)
-            simulation_time = observation_timestamp
+        observer_list = self.__generate_mm1_arr_obs(lambda_par, T, 5)
 
-            
-
-        
         for arrival_time in arrival_list:
             result_list.append(["A", arrival_time])
         for departure_time in departure_list:
@@ -136,12 +120,6 @@ class Lab1():
         # We sort all the time events by time
         event_list = sorted(result_list, key=lambda x: x[1])
 
-        # # for i in range(len(event_list)-500):
-        # #     if event_list[i][0] == "O":
-        # #         print(event_list[i])
-        # for e in event_list:
-        #     print(e)
-        
         # * We start to take into account the events
         # Declaration of variables
         total_num_packs_queue = 0
@@ -169,7 +147,15 @@ class Lab1():
         # print("Total departures= "+str(num_departed))
         return total_num_packs_queue/num_observers, total_observer_idles/num_observers
 
-        # Now we wil calculate the departure time
+    def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
+        aux_list = []
+        simulation_time = 0
+        while simulation_time < T:
+            arrival_timestamp = self.__generate_exp_distribution(
+                lambda_par*steps)+simulation_time
+            aux_list.append(arrival_timestamp)
+            simulation_time = arrival_timestamp
+        return aux_list
 
     def __generate_exp_distribution(self, lambda_param: int) -> list:
         """
@@ -191,26 +177,71 @@ class Lab1():
     # #     self.__event_list.append((type, timestamp))
 
 
-# def generate_graph_points(avg_packet_length, trans_rate, t):
-#     step = 0.1
-#     start = 0.25
-#     end = 0.95
+def generate_graph_points(avg_packet_length, trans_rate, t):
+    step = 0.1
+    start = 0.25
+    end = 0.95
 
-#     result = []
+    result = []
 
-#     i = start
-#     while i < end:
-#         lambda_para = trans_rate * i / avg_packet_length
+    i = start
+    while i < end:
+        lambda_para = trans_rate * i / avg_packet_length
 
-#         list_m_m_1 = a.m_m_1_queue(
-#             avg_packet_length, trans_rate, lambda_para, t)
+        list_m_m_1 = a.m_m_1_queue(
+            avg_packet_length, trans_rate, lambda_para, t)
 
-#         result.append([i, list_m_m_1[0]])
-#         print(list_m_m_1[0])
-#         i += step
+        result.append([i, list_m_m_1[0]])
+        i += step
+    return result
 
-#     for e in result:
-#         print(e)
+
+def checkT_infinite():
+    sol_T = a.m_m_1_queue(avg_packet_length, trans_rate, lambda_par, T)
+    mul_T = [x * 0.05 for x in sol_T]
+    dif_T = [[sol_T[0]-mul_T[0], sol_T[0]+mul_T[1]],
+             [sol_T[1]-mul_T[0], sol_T[1]+mul_T[1]]]
+
+    sol_2T = a.m_m_1_queue(avg_packet_length, trans_rate, lambda_par, 2*T)
+    mul_2T = [x * 0.05 for x in sol_2T]
+    dif_2T = [[sol_2T[0]-mul_2T[0], sol_2T[0]+mul_2T[1]],
+              [sol_2T[1]-mul_2T[0], sol_2T[1]+mul_2T[1]]]
+
+    sol_3T = a.m_m_1_queue(avg_packet_length, trans_rate, lambda_par, 3*T)
+    mul_3T = [x * 0.05 for x in sol_3T]
+    dif_3T = [[sol_T[0]-mul_3T[0], sol_3T[0]+mul_3T[1]],
+              [sol_3T[1]-mul_3T[0], sol_3T[1]+mul_3T[1]]]
+
+    dif_T_2T = [abs(sol_T[0]-sol_2T[0]), abs(sol_T[1]-sol_2T[1])]
+
+    print("T: " + str(sol_T))
+    print("2T: " + str(sol_2T))
+    print("3T: " + str(sol_3T))
+    print("\n")
+
+    print("The difference between T and 2T is: " + str(dif_T_2T))
+    print("The range of difference 5% for T is: " + str(dif_T))
+
+    inside_first1 = [False, False]
+
+    if(dif_T[0][0] <= sol_2T[0] - dif_T_2T[0] and sol_2T[0] + dif_T_2T[0] <= dif_T[0][1]):
+        inside_first1[0] = True
+    if(dif_T[1][0] <= sol_2T[1] - dif_T_2T[1] and sol_2T[1] + dif_T_2T[1] <= dif_T[1][1]):
+        inside_first1[1] = True
+    print("Does T-2T enter in the difference? " + str(inside_first1))
+    print("\n")
+
+    dif_2T_3T = [abs(sol_2T[0]-sol_3T[0]), abs(sol_2T[1]-sol_3T[1])]
+    print("The difference between 2T and 3T is: " + str(dif_2T_3T))
+    print("The range of difference 5% for 2T is: " + str(dif_2T))
+
+    inside_first2 = [False, False]
+
+    if(dif_2T[0][0] <= sol_3T[0] - dif_2T_3T[0] and sol_3T[0] + dif_2T_3T[0] <= dif_2T[0][1]):
+        inside_first2[0] = True
+    if(dif_2T[1][0] <= sol_3T[1] - dif_2T_3T[1] and sol_3T[1] + dif_2T_3T[1] <= dif_2T[1][1]):
+        inside_first2[1] = True
+    print("Does 2T-3T enter in the difference? " + str(inside_first2))
 
 
 if __name__ == "__main__":
@@ -220,38 +251,5 @@ if __name__ == "__main__":
     trans_rate = 1_000_000
     avg_packet_length = 2_000
     T = 1000
-    # a.question1(lambda_par)
-
-    sol_T = a.m_m_1_queue(avg_packet_length, trans_rate, lambda_par, T)
-    mul_T = [x * 0.05 for x in sol_T]
-    dif_T = [[x - y for x, y in zip(sol_T, mul_T)], [x + y for x, y in zip(sol_T, mul_T)]]
-
-    sol_2T = a.m_m_1_queue(avg_packet_length, trans_rate, lambda_par, 2*T)
-    mul_2T = [x * 0.05 for x in sol_2T]
-    dif_2T = [[x - y for x, y in zip(sol_2T, mul_2T)], [x + y for x, y in zip(sol_2T, mul_2T)]]
-
-    sol_3T = a.m_m_1_queue(avg_packet_length, trans_rate, lambda_par, 3*T)
-    mul_3T = [x * 0.05 for x in sol_3T]
-    dif_3T = [[x - y for x, y in zip(sol_3T, mul_3T)], [x + y for x, y in zip(sol_3T, mul_3T)]]
-
-    difT_2T = [abs(x - y) for x, y in zip(sol_T, sol_2T)]
-    print("The difference between T and 2T is: " + str(difT_2T))
-    print("The range of difference 5% for T is: " + str(dif_T))
-    inside_first = False
-    if(dif_T[0] <= abs(sol_T-sol_2T) <= dif_T[1]): 
-        inside_first = True
-    print("Does T-2T enter in the difference? " + inside_first)
-
-
-    dif2T_3T = [abs(x - y) for x, y in zip(sol_2T, sol_3T)]
-    print("The difference between 2T and 3T is: " + str(dif2T_3T))
-    print("The range of difference 5% for 2T is: " + str(dif_2T))
-    inside_first = False
-    if(dif_2T[0] <= <= dif_2T[1]): 
-        inside_first = True
-    print("Does 2T-3T enter in the difference? " + inside_first)
-
-
-
-
-    #generate_graph_points(avg_packet_length, trans_rate, 1000)
+    a.question1(lambda_par)
+    print(generate_graph_points(avg_packet_length, trans_rate, T*2))
