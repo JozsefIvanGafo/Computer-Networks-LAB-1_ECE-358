@@ -8,7 +8,7 @@ In this module we will write the main code
 
 # Imports
 from multiprocessing import Pool
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import math
 import random
@@ -148,6 +148,125 @@ class Lab1():
                     total_observer_idles += 1
 
         return total_num_packs_queue/num_observers, total_observer_idles/num_observers
+    
+
+    def m_m_1_k_queue(self,avg_len:int, trans_rate:int,lambda_par:int,T:int,K:int)->[float,float,float]:
+        """
+        This method is in charge of simulating the m_m_1_k queue
+        @param avg_len: This integer represent the average length packet in bits
+        @param trans_rate: This integer represent the transmission rate of a packet.
+        @param lambda_par: This integer represents the parameter lambda od the poisson distribution
+        @param T: This integer represent the simulation time
+        @param K: This integer represent the max number of packets that a queue can hold
+        @return a list: It returns a list of floats where the first element represent E[n],p_idle and p_loss
+        """
+
+        # ! Declaration of variables for the m_m_1_k queue
+        num_arrival = 0
+        num_departed = 0
+        num_observers = 0
+        transmission_times = []
+        arrival_list = []
+        lost_packets_list=[]
+        departure_list = []
+        observer_list = []
+        event_list = []
+        result_list = []
+
+        # * Arrival
+        # we generate the arrivals
+        arrival_list = self.__generate_mm1_arr_obs(lambda_par, T)
+        arrival_list.sort()
+        
+        
+        # *  Observations
+        # Now we add the observers event
+        observer_list = self.__generate_mm1_arr_obs(lambda_par, T, 5)
+
+        # * Service Time
+        length_packets = []
+        length_arrival = len(arrival_list)
+        length_packets = [self.__generate_exp_distribution(1/avg_len) for _ in range(length_arrival)]
+        for packet in length_packets:
+            # How much time it takes to process each packet
+            transmission_times.append(packet / trans_rate)
+        
+        for i in range(len(arrival_list)):
+            arrival_list[i]= [arrival_list[i],transmission_times[i]]
+            
+        # * We mix all the list and sort them into event_list     
+        
+        for arrival_time in arrival_list:
+            event_list.append(["A", arrival_time[0], arrival_time[1]])
+        for observer_time in observer_list:
+            event_list.append(["O", observer_time])
+        
+        event_list = sorted(event_list, key=lambda x: x[1])
+
+        # * Departure
+        # Declaration of variables
+        event_list2 = []
+        last_departure_time = 0
+        num_elem_queue = 0
+        total_num_packs_queue = 0
+        total_observer_idles = 0
+
+        #print(len(event_list))
+        
+        
+        end_loop = len(arrival_list)
+        i = 0
+
+        while i < end_loop:
+            if(departure_list):
+                if (departure_list[0][1]<event_list[i][1]):
+                    event = departure_list.pop(0)
+                else:
+                    event = event_list[i]
+                    i += 1
+            else:
+                event = event_list[i]
+                i+= 1
+
+            if event[0] == "A":
+                if num_elem_queue < K:
+                    # Queue free
+                    num_arrival += 1
+                    #departure_timestamp = 0
+                    if num_elem_queue == 0:
+                        # Queue is empty
+                        departure_timestamp = event[1] + event[2]
+                    else:
+                        # Queue with packets
+                        
+                        departure_timestamp = last_departure_time + event[2]
+                    num_elem_queue+=1
+                    departure_list.append(["D", departure_timestamp])
+                    departure_list.sort()
+                   
+                
+            elif event[0] == "D":
+                num_departed+=1
+                last_departure_time=event[1]
+                num_elem_queue -= 1
+
+            elif event[0] == "O":
+                num_observers += 1
+                # We record the num of packets that are currently on the queue
+                total_num_packs_queue += (num_arrival-num_departed)
+                if num_arrival == num_departed:
+                    total_observer_idles += 1
+
+        """print("total_num_packs = "+ str(total_num_packs_queue))
+        print("idles total= " +  str(total_observer_idles))
+        print("Total observers= "+str(num_observers))
+        print("Total arrivals= "+str(num_arrival))
+        print("Total departures= "+str(num_departed))
+        print("total packets lost"+str(num_departed/num_arrival))"""
+        return total_num_packs_queue/num_observers, total_observer_idles/num_observers , num_departed/num_arrival
+
+
+
 
     def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
         """
@@ -188,50 +307,54 @@ class Lab1():
         start = 0.25
         end = 0.95
         # Graph for E[N]
-        print("generating points for graph 1")
-        with Pool() as pool:
-            input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T, 0)
-                          for i in np.arange(start, end, step)]
-            results = pool.starmap(self.generate_point, input_data)
+        result=[]
+        for j in range(2):
+            print("generating points for graph %s"%(j))
+            #cores=4
+            with Pool() as pool:
+                input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T, j)
+                            for i in np.arange(start, end, step)]
+                pool_list = pool.starmap(self.generate_point, input_data)
+            print("Finished generating points for graph %s"%(j))
+            result.append(pool_list)
+        print(len(result))
+
 
         # We save the points
-        x1 = [point[0] for point in results]
-        y1 = [point[1]for point in results]
-        print("Finished generating points for graph 1")
+        #pos 0 is for E[n] and pos 1 is for p_idle
+        x = [[point[0] for point in result[0]],[point[0] for point in result[1]]]
+        y = [[point[1]for point in result[0]],[point[1]for point in result[1]]]
 
-        # Graph for p_idle
-        print("Generating points for graph 2")
-        results = []
-        with Pool() as pool:
-            input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T, 1)
-                          for i in np.arange(start, end, step)]
-            results = pool.starmap(self.generate_point, input_data)
-
-        # We generate the graph
-        # We save the points
-        x2 = [point[0] for point in results]
-        y2 = [point[1]for point in results]
-        print("Finished generating points for graph 1")
         print("Generating graphs, to finish the program please close the graph window.")
 
-        # We initialize the graph
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        ax1.plot(x1, y1)
-        ax1.set_xlabel('Traffic intensity p')
-        ax1.set_ylabel('Average number in system E[n]')
-        ax1.set_title(
-            "average number of packets in the queue as a function of p")
-        ax1.legend()
 
-        ax2.plot(x2, y2)
-        ax2.set_xlabel("Traffic intensity p")
-        ax2.set_ylabel("Average number in system p_idle")
-        ax2.set_title(
-            "The proportion of time the system is idle as a function of p")
-        ax2.legend()
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        graph_list=[ax1,ax2]
+        text=[['Average number in system E[n]',"average number of packets in the queue as a function of p"],
+              ["Average number in system p_idle","The proportion of time the system is idle as a function of p"]]
+        for i,graph in enumerate(graph_list):
+            # We initialize the graph
+            graph.plot(x[i], y[i],label="")
+            graph.set_xlabel('Traffic intensity p')
+            graph.set_ylabel(text[i][0])
+            graph.set_title(text[i][1])
 
         plt.tight_layout()
         plt.show()
+
+    def create_graph_for_m_m_1_k_queue(self, avg_len, trans_rate, T):
+        pass
+
+
+
+    def generate_points2(self,i,avg_len,trans_rate,lambda_par,T,K,type_info):
+        # Calculate data point for a specific 'i'
+        list_m_m_1 = self.m_m_1_k_queue(avg_len, trans_rate, lambda_par, T,K)
+        # If we want E[n] then type_info is 0 if is p_idle then type_info is 1
+        return [i, list_m_m_1[type_info]]
+
+
+
 
 
 
@@ -246,14 +369,16 @@ if __name__ == "__main__":
 
     # RUNNING THE LAB
     # QUESTION 1
-    a.question1(lambda_par)
+    #a.question1(lambda_par)
 
     # INFINITE QUEUE
-    # a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,T)
+    a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,T)
 
     # FINITE
+    #a.m_m_1_k_queue(avg_packet_length,trans_rate,lambda_par,T,10)
     """k = [10, 25, 50]
     for element in k:
         print(generate_graph_points2(avg_packet_length, trans_rate, T, element))"""
+    #a.create_graph_for_m_m_1_k_queue(avg_packet_length,trans_rate,T)
     
     #print(a.m_m_1_k_queue(avg_packet_length, trans_rate, lambda_par, T, 10))
