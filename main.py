@@ -8,7 +8,7 @@ In this module we will write the main code
 
 # Imports
 from multiprocessing import Pool
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import math
 import random
@@ -34,11 +34,11 @@ class Lab1():
         """
         This method is in charge of generating 1000 random variables 
         with lambda 75 with numpy library and it prints the mean and variance
-        @param : None
+        @param lambda_param: Value for lambda 
         @return : None
         """
         # For this exercise we will use the library numpy
-        # because it makes the operations easier
+        # as it makes the operations easier
 
         # Calculate the expected mean and variance for an exponential distribution with λ=75
         expected_mean = 1 / lambda_param
@@ -47,14 +47,17 @@ class Lab1():
         # We generate 1000 exponential random variables
         generated_numbers = [self.__generate_exp_distribution(
             lambda_param) for _ in range(1000)]
+        
+        # We do the mean and the variance
         mean = np.mean(generated_numbers)
         variance = np.var(generated_numbers)
 
         # Print the results
-        print(f"Mean of generated random variables: {mean}")
-        print(f"Expected mean for λ=75: {expected_mean}")
-        print(f"Variance of generated random variables: {variance}")
-        print(f"Expected variance for λ=75: {expected_variance}")
+        print("\nQUESTION 1:")
+        print(f"\tMean of generated random variables: {mean}")
+        print(f"\tExpected mean for λ=75: {expected_mean}")
+        print(f"\tVariance of generated random variables: {variance}")
+        print(f"\tExpected variance for λ=75: {expected_variance}\n")
 
     def m_m_1_queue(self, avg_len: int, trans_rate: int, lambda_par: int, T: int) -> list:
         """
@@ -146,7 +149,15 @@ class Lab1():
 
        
         return total_num_packs_queue/num_observers, total_observer_idles/num_observers
+    
     def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
+        """
+        This method is in charge of generating the list of arrivals and observers
+        @param lambda_param: An integer that contains the average number of packets arrived
+        @param T: Duration of the simulation
+        @param steps: It is 1 for default, will change for observers as the param is diferent
+        @return list: We return a list with the events generated
+        """
         aux_list = []
         simulation_time = 0
         while simulation_time < T:
@@ -228,6 +239,15 @@ if __name__ == "__main__":
     trans_rate = 1_000_000
     avg_packet_length = 2_000
     T = 1_000
+    
+    # RUNNING THE LAB
+    # QUESTION 1
+    a.question1(lambda_par)
+
+    # INFINITE QUEUE
+    # a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,T)
+
+    # FINITE
     #print(a.m_m_1_k_queue(avg_packet_length, trans_rate, lambda_par, T, 10))
-    # a.question1(lambda_par)
-    a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,T)
+    
+    

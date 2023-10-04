@@ -254,20 +254,6 @@ class Lab1():
         print("total packets lost"+str(num_packet_lost))
         return total_num_packs_queue/num_observers, total_observer_idles/num_observers , num_packet_lost/num_arrival
 
-
-
-
-        
-       
-
-
-
-
-
-
-       
-
-
     def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
         aux_list = []
         simulation_time = 0
