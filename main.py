@@ -7,9 +7,17 @@ In this module we will write the main code
 """
 
 # Imports
+from multiprocessing import Pool
+import matplotlib.pyplot as plt
+import numpy as np
 import math
 import random
-import numpy as np
+import time
+
+# We define the type of events
+ARRIVAL = "A"
+DEPARTURE = "D"
+OBSERVER = "O"
 
 
 class Lab1():
@@ -18,11 +26,11 @@ class Lab1():
     methods required for the lab 1
     """
 
-    def __init__(self, lambda_param) -> None:
-        self.__lambda_param = lambda_param
+    def __init__(self) -> None:
+        pass
 
     # We write the main code
-    def question1(self):
+    def question1(self, lambda_param):
         """
         This method is in charge of generating 1000 random variables 
         with lambda 75 with numpy library and it prints the mean and variance
@@ -33,13 +41,12 @@ class Lab1():
         # because it makes the operations easier
 
         # Calculate the expected mean and variance for an exponential distribution with λ=75
-        expected_mean = 1 / self.__lambda_param
-        expected_variance = 1 / (self.__lambda_param ** 2)
+        expected_mean = 1 / lambda_param
+        expected_variance = 1 / (lambda_param ** 2)
 
         # We generate 1000 exponential random variables
-        generated_numbers = self.generate_exp_distribution(
-            self.__lambda_param, 1000)
-
+        generated_numbers = [self.__generate_exp_distribution(
+            lambda_param) for _ in range(1000)]
         mean = np.mean(generated_numbers)
         variance = np.var(generated_numbers)
 
@@ -49,7 +56,7 @@ class Lab1():
         print(f"Variance of generated random variables: {variance}")
         print(f"Expected variance for λ=75: {expected_variance}")
 
-    def m_m_1_queue(self, avg_len: float, trans_rate: float, lambda_parameter2: float) -> None:
+    def m_m_1_queue(self, avg_len: int, trans_rate: int, lambda_par: int, T: int) -> list:
         """
         Build your simulator for this queue and explain in words what you have done. Show your code in the report. In 
         particular, define your variables. Should there be a need, draw diagrams to show your program structure. Explain how you 
@@ -58,38 +65,40 @@ class Lab1():
         @param trans_rate: Is the transmission rate of the output link in bits/sec (C)
         @return: None
         """
-
-        # TODO: QUESTION Q1 okay?
-        # TODO: QUESTION simulation time T
-
-        # Define variables for the queue
+        # ! Declaration of variables for the m_m_1 queue
         num_arrival = 0
         num_departed = 0
         num_observers = 0
-
-        # generate random variables for packet arrival
-
-        # We generate 1000 exponential random variables
-        # that represent the times that the packets arrived
-        arrival_packets = self.generate_exp_distribution(
-            lambda_parameter2, 1000)
-        arrival_packets.sort()
-
-        # We generate the packet size for every packet that arrived
-        length_packets = self.generate_exp_distribution(avg_len, 1000)
-
-        # transmission time = packet's length / transmission rate of the link
         transmission_times = []
+        arrival_list = []
+        departure_list = []
+        observer_list = []
+        event_list = []
+        result_list = []
+
+        # * Arrival
+
+        # we generate the arrivals
+        arrival_list = self.__generate_mm1_arr_obs(lambda_par, T)
+        arrival_list.sort()
+        length_packets = []
+
+        # We create the packet size for each arrival
+        length_arrival = len(arrival_list)
+        length_packets = [self.__generate_exp_distribution(
+            1/avg_len) for _ in range(length_arrival)]
+
+        # How much time it takes to process each packet
+
         for packet in length_packets:
             transmission_times.append(packet / trans_rate)
 
-        # List where we will store all the departures times
-        departure_list = []
-        # Variable that tells us the time we are in the queue
+        # * Departure
+        # We add the departure time
         queue_time = 0
+        departure_time = 0
         # Loop that calculates how the time of departure for each packet
-        for count, arrival_packet_time in enumerate(arrival_packets):
-
+        for count, arrival_packet_time in enumerate(arrival_list):
             # If the queue is idle we just sum the arrival time +transmission [count] and we add it to the list
             if queue_time < arrival_packet_time:
                 departure_time = arrival_packet_time+transmission_times[count]
@@ -102,124 +111,123 @@ class Lab1():
             # We update the queue time of the queue, with the las departured time
             queue_time = departure_time
 
-        # We generate the observers
-        observer_list = self.generate_exp_distribution(
-            lambda_parameter2*5, 1000)
-        observer_list.sort()
+        # Now we add the observers event
+        observer_list = self.__generate_mm1_arr_obs(lambda_par, T, 5)
 
-        # We join all the list while we add its type ("A"=arrival,"D"=departure and "O"=observer)
-        result_list = []
-        for arrival_time in arrival_packets:
+        for arrival_time in arrival_list:
             result_list.append(["A", arrival_time])
         for departure_time in departure_list:
             result_list.append(["D", departure_time])
         for observer_time in observer_list:
             result_list.append(["O", observer_time])
-        #We sort all the time events by time
-        sorted_list = sorted(result_list, key=lambda x: x[1])
+        # We sort all the time events by time
+        event_list = sorted(result_list, key=lambda x: x[1])
 
-        num_idle = 0
-        avg_packets_in_queue = []
-        for count, element,  in enumerate(sorted_list):
-            if element[0]=="A":
-                num_arrival+=1
-            elif element[0]=="D":
-                num_departed+=1
-            else:
-                if num_arrival-num_departed== 0:
-                    num_idle += 1
-                else:
-                    avg_packets_in_queue.append(num_arrival-num_departed)
-                    
-                num_observers+=1
-                #TODO: E[N] = time average of packets in the queue
-                #TODO:PIDLE = The proportion of time the server is idle, i.e., no packets in the queue nor a packet is being transmitted
-                #TODO:PLOSS = As it is infinite we don't lose packets
-                
+        # * We start to take into account the events
+        # Declaration of variables
+        total_num_packs_queue = 0
+        total_observer_idles = 0
 
-        # total_avg = 0 # E[N]
-        # for e in avg_packets_in_queue:
-        #    total_avg += e
-        #total_avg = total_avg/len(avg_packets_in_queue)
-
-        # while sorted_list[i][1]< 1:
-        #     if sorted_list[i][0] == "O" :
-        #         break
-        """avg_packets_in_queue = []
-        sorted_list = []
-        num_idle = 0
-        num_arrival = 0
-        num_departed = 0
-        num_observers = 0
-        while num_arrival < 1000 and num_departed < 1000 and num_observers < 1000:
-            # We register the time of every list
-            arrival = arrival_packets[num_arrival]
-            observers = observer_list[num_observers]
-            departed = departure_list[num_departed]
-            # Conditionals
-            if arrival < min(observers, departed):
+        for _ ,event in enumerate(event_list):
+        #for i in range(len(event_list)):
+            #event_type= event_list.pop(0)
+            event_type = event[0]
+            # Arrival
+            if event_type == 'A':
                 num_arrival += 1
-                sorted_list.append(["A", arrival])
-            elif departed < min(arrival, observers):
+            elif event_type == 'D':
                 num_departed += 1
-                sorted_list.append(["D", departed])
             else:
-                if num_arrival-num_departed == 0:
-                    num_idle += 1
-                else:
-                    avg_packets_in_queue.append(num_arrival-num_departed)
                 num_observers += 1
-                sorted_list.append(["O", observers])"""
+                # We record the num of packets that are currently on the uque
+                total_num_packs_queue += (num_arrival-num_departed)
+                if num_arrival == num_departed:
+                    total_observer_idles += 1
 
-        total_avg = 0  # E[N]
-        if(len(avg_packets_in_queue) > 0):
-            for e in avg_packets_in_queue:
-                total_avg += e
-            total_avg = total_avg/len(avg_packets_in_queue)
-        return total_avg
+       
+        return total_num_packs_queue/num_observers, total_observer_idles/num_observers
+    def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
+        aux_list = []
+        simulation_time = 0
+        while simulation_time < T:
+            arrival_timestamp = self.__generate_exp_distribution(
+                lambda_par*steps)+simulation_time
+            aux_list.append(arrival_timestamp)
+            simulation_time = arrival_timestamp
+        return aux_list
 
-    # Auxiliary methods
-
-    def generate_exp_distribution(self, lambda_param: int, size: int) -> list:
+    def __generate_exp_distribution(self, lambda_param: int) -> list:
         """
         This method is in charge of generating exponential random variables
         @param lambda_param: An integer that contains the average number of packets arrived
         @param size: An integer that defines how many numbers we generate
         @return list: We return a list with the numbers generated
         """
-        # Define variables to generate the numbers
         expected_mean = 1/lambda_param
-        generated_numbers = []
-        # Generate  size exponential random numbers
-        for _ in range(size):
-            # Generate a number between [0,1)
-            random_number = random.random()
-            # We add the new generated number to the list
-            generated_numbers.append(-expected_mean*math.log(1-random_number))
-        return generated_numbers
+        return -expected_mean*math.log(1-random.random())
 
 
-def generate_graph_points(avg_packet_length, trans_rate):
-    step = 0.1
-    start = 0.25 + step
-    end = 0.95
+    # #     self.__event_list.append((type, timestamp))
+    def generate_point(self, i, avg_len, trans_rate, lambda_par, T,type_info):
+        # Calculate data point for a specific 'i'
+        list_m_m_1 = self.m_m_1_queue(avg_len, trans_rate, lambda_par, T)
+        #If we want E[n] then type_info is 0 if is p_idle then type_info is 1
+        return [i, list_m_m_1[type_info]]
 
-    result = []
+    def create_graph_for_m_m_1_queue(self, avg_len, trans_rate, T):
+        step = 0.1
+        start = 0.25
+        end = 0.95
+        #Graph for E[N]
+        print("generating points for graph 1")
+        with Pool() as pool:
+            input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T,0) for i in np.arange(start, end, step)]
+            results = pool.starmap(self.generate_point, input_data)
 
-    i = start
-    while i < end:
-        lambda_para = trans_rate * i / avg_packet_length
-        result.append(
-            [i, a.m_m_1_queue(avg_packet_length, trans_rate, lambda_para)])
-        i += step
-
-    for e in result:
-        print(e)
+        #We save the points
+        x1=[point[0] for point in results]
+        y1=[point[1]for point in results]
+        print("Finished generating points for graph 1")
 
 
-a = Lab1(75)
-a.question1()
-trans_rate = 1000*1000000
-avg_packet_length = 2000
+        #Graph for p_idle
+        print("Generating points for graph 2")
+        results=[]
+        with Pool() as pool:
+            input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T,1) for i in np.arange(start, end, step)]
+            results = pool.starmap(self.generate_point, input_data)
+        
+        #We generate the graph
+        #We save the points
+        x2=[point[0] for point in results]
+        y2=[point[1]for point in results]
+        print("Finished generating points for graph 1")
+        print("Generating graphs, to finish the program please close the graph window.")
 
-generate_graph_points(avg_packet_length, trans_rate)
+        #We initialize the graph
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x1,y1)
+        ax1.set_xlabel('Traffic intensity p')
+        ax1.set_ylabel('Average number in system E[n]')
+        ax1.set_title("average number of packets in the queue as a function of p")
+        ax1.legend()
+
+        ax2.plot(x2,y2)
+        ax2.set_xlabel("Traffic intensity p")
+        ax2.set_ylabel("Average number in system p_idle")
+        ax2.set_title("The proportion of time the system is idle as a function of p")
+        ax2.legend()
+
+        plt.tight_layout()
+        plt.show()
+
+
+if __name__ == "__main__":
+    a = Lab1()
+    lambda_par = 75
+    trans_rate = 1_000_000
+    avg_packet_length = 2_000
+    T = 1_000
+    #print(a.m_m_1_k_queue(avg_packet_length, trans_rate, lambda_par, T, 10))
+    # a.question1(lambda_par)
+    a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,T)
