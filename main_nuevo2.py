@@ -158,7 +158,6 @@ class Lab1():
         num_arrival = 0
         num_departed = 0
         num_observers = 0
-        num_packet_lost=0
         transmission_times = []
         arrival_list = []
         lost_packets_list=[]
@@ -208,7 +207,7 @@ class Lab1():
         print(len(event_list))
         
         # FIXME: HAY QUE AÑADIR QUE NO ACABE SI QUEDAN DEPARTURES
-        while event_list!=[]:
+        """while event_list!=[]:
             if(departure_list):
                 if (departure_list[0][1]<event_list[0][1]):
                     event = departure_list.pop(0)
@@ -226,6 +225,7 @@ class Lab1():
                         departure_timestamp = event[1] + event[2]
                     else:
                         # Queue with packets
+                        
                         departure_timestamp = last_departure_time + event[2]
                     num_elem_queue+=1
                     departure_list.append(["D", departure_timestamp])
@@ -244,6 +244,49 @@ class Lab1():
                 # We record the num of packets that are currently on the queue
                 total_num_packs_queue += (num_arrival-num_departed)
                 if num_arrival == num_departed:
+                    total_observer_idles += 1"""
+        
+        end_loop = len(arrival_list)
+        i = 0
+
+        while i < end_loop:
+            if(departure_list):
+                if (departure_list[0][1]<event_list[i][1]):
+                    event = departure_list.pop(0)
+                else:
+                    event = event_list[i]
+                    i += 1
+            else:
+                event = event_list[i]
+                i+= 1
+
+            if event[0] == "A":
+                if num_elem_queue < K:
+                    # Queue free
+                    num_arrival += 1
+                    #departure_timestamp = 0
+                    if num_elem_queue == 0:
+                        # Queue is empty
+                        departure_timestamp = event[1] + event[2]
+                    else:
+                        # Queue with packets
+                        
+                        departure_timestamp = last_departure_time + event[2]
+                    num_elem_queue+=1
+                    departure_list.append(["D", departure_timestamp])
+                    departure_list.sort()
+                   
+                
+            elif event[0] == "D":
+                num_departed+=1
+                last_departure_time=event[1]
+                num_elem_queue -= 1
+
+            elif event[0] == "O":
+                num_observers += 1
+                # We record the num of packets that are currently on the queue
+                total_num_packs_queue += (num_arrival-num_departed)
+                if num_arrival == num_departed:
                     total_observer_idles += 1
 
         print("total_num_packs = "+ str(total_num_packs_queue))
@@ -251,8 +294,8 @@ class Lab1():
         print("Total observers= "+str(num_observers))
         print("Total arrivals= "+str(num_arrival))
         print("Total departures= "+str(num_departed))
-        print("total packets lost"+str(num_packet_lost))
-        return total_num_packs_queue/num_observers, total_observer_idles/num_observers , num_packet_lost/num_arrival
+        print("total packets lost"+str(num_departed/num_arrival))
+        return total_num_packs_queue/num_observers, total_observer_idles/num_observers , num_departed/num_arrival
 
     def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
         aux_list = []
@@ -294,6 +337,22 @@ def generate_graph_points(avg_packet_length, trans_rate, t):
         i += step
     return result
 
+def generate_graph_points2(avg_packet_length, trans_rate, t, k):
+    step = 0.1
+    start = 0.5
+    end = 1.5
+
+    result = []
+
+    i = start
+    while i < end:
+        lambda_para = trans_rate * i / avg_packet_length
+
+        list_m_m_1 = a.m_m_1_k_queue(avg_packet_length, trans_rate, lambda_para, t, k)
+
+        result.append([i, list_m_m_1[0], list_m_m_1[1], list_m_m_1[2]])
+        i += step
+    return result
 
 def checkT_infinite():
     sol_T = a.m_m_1_queue(avg_packet_length, trans_rate, lambda_par, T)
@@ -350,6 +409,12 @@ if __name__ == "__main__":
     trans_rate = 1_000_000
     avg_packet_length = 2_000
     T = 1000
-    print(a.m_m_1_k_queue(avg_packet_length, trans_rate, lambda_par, T, 10))
+    # print(a.m_m_1_k_queue(avg_packet_length, trans_rate, lambda_par, T, 10))
     # a.question1(lambda_par)
     # print(generate_graph_points(avg_packet_length, trans_rate, T*2))
+     # FINITE
+    # k = [10, 25, 50]
+    k = [10, 25, 50]
+    for element in k:
+        # en este print en realidad devuelve p, E(N), pidle, ploss
+        print(generate_graph_points2(2000, trans_rate, T, element))

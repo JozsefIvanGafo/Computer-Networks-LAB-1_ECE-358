@@ -47,7 +47,7 @@ class Lab1():
         # We generate 1000 exponential random variables
         generated_numbers = [self.__generate_exp_distribution(
             lambda_param) for _ in range(1000)]
-        
+
         # We do the mean and the variance
         mean = np.mean(generated_numbers)
         variance = np.var(generated_numbers)
@@ -131,8 +131,8 @@ class Lab1():
         total_num_packs_queue = 0
         total_observer_idles = 0
 
-        for _ ,event in enumerate(event_list):
-        #for i in range(len(event_list)):
+        for _, event in enumerate(event_list):
+            # for i in range(len(event_list)):
             #event_type= event_list.pop(0)
             event_type = event[0]
             # Arrival
@@ -147,9 +147,8 @@ class Lab1():
                 if num_arrival == num_departed:
                     total_observer_idles += 1
 
-       
         return total_num_packs_queue/num_observers, total_observer_idles/num_observers
-    
+
     def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
         """
         This method is in charge of generating the list of arrivals and observers
@@ -177,60 +176,65 @@ class Lab1():
         expected_mean = 1/lambda_param
         return -expected_mean*math.log(1-random.random())
 
-
     # #     self.__event_list.append((type, timestamp))
-    def generate_point(self, i, avg_len, trans_rate, lambda_par, T,type_info):
+    def generate_point(self, i, avg_len, trans_rate, lambda_par, T, type_info):
         # Calculate data point for a specific 'i'
         list_m_m_1 = self.m_m_1_queue(avg_len, trans_rate, lambda_par, T)
-        #If we want E[n] then type_info is 0 if is p_idle then type_info is 1
+        # If we want E[n] then type_info is 0 if is p_idle then type_info is 1
         return [i, list_m_m_1[type_info]]
 
     def create_graph_for_m_m_1_queue(self, avg_len, trans_rate, T):
         step = 0.1
         start = 0.25
         end = 0.95
-        #Graph for E[N]
+        # Graph for E[N]
         print("generating points for graph 1")
         with Pool() as pool:
-            input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T,0) for i in np.arange(start, end, step)]
+            input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T, 0)
+                          for i in np.arange(start, end, step)]
             results = pool.starmap(self.generate_point, input_data)
 
-        #We save the points
-        x1=[point[0] for point in results]
-        y1=[point[1]for point in results]
+        # We save the points
+        x1 = [point[0] for point in results]
+        y1 = [point[1]for point in results]
         print("Finished generating points for graph 1")
 
-
-        #Graph for p_idle
+        # Graph for p_idle
         print("Generating points for graph 2")
-        results=[]
+        results = []
         with Pool() as pool:
-            input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T,1) for i in np.arange(start, end, step)]
+            input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T, 1)
+                          for i in np.arange(start, end, step)]
             results = pool.starmap(self.generate_point, input_data)
-        
-        #We generate the graph
-        #We save the points
-        x2=[point[0] for point in results]
-        y2=[point[1]for point in results]
+
+        # We generate the graph
+        # We save the points
+        x2 = [point[0] for point in results]
+        y2 = [point[1]for point in results]
         print("Finished generating points for graph 1")
         print("Generating graphs, to finish the program please close the graph window.")
 
-        #We initialize the graph
+        # We initialize the graph
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        ax1.plot(x1,y1)
+        ax1.plot(x1, y1)
         ax1.set_xlabel('Traffic intensity p')
         ax1.set_ylabel('Average number in system E[n]')
-        ax1.set_title("average number of packets in the queue as a function of p")
+        ax1.set_title(
+            "average number of packets in the queue as a function of p")
         ax1.legend()
 
-        ax2.plot(x2,y2)
+        ax2.plot(x2, y2)
         ax2.set_xlabel("Traffic intensity p")
         ax2.set_ylabel("Average number in system p_idle")
-        ax2.set_title("The proportion of time the system is idle as a function of p")
+        ax2.set_title(
+            "The proportion of time the system is idle as a function of p")
         ax2.legend()
 
         plt.tight_layout()
         plt.show()
+
+
+
 
 
 if __name__ == "__main__":
@@ -239,7 +243,7 @@ if __name__ == "__main__":
     trans_rate = 1_000_000
     avg_packet_length = 2_000
     T = 1_000
-    
+
     # RUNNING THE LAB
     # QUESTION 1
     a.question1(lambda_par)
@@ -248,6 +252,8 @@ if __name__ == "__main__":
     # a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,T)
 
     # FINITE
+    """k = [10, 25, 50]
+    for element in k:
+        print(generate_graph_points2(avg_packet_length, trans_rate, T, element))"""
+    
     #print(a.m_m_1_k_queue(avg_packet_length, trans_rate, lambda_par, T, 10))
-    
-    
