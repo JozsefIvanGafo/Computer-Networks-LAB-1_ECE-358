@@ -206,9 +206,16 @@ class Lab1():
         total_observer_idles = 0
 
         print(len(event_list))
+        
+        # FIXME: HAY QUE AÑADIR QUE NO ACABE SI QUEDAN DEPARTURES
         while event_list!=[]:
-            #
-            event = event_list.pop(0)
+            if(departure_list):
+                if (departure_list[0][1]<event_list[0][1]):
+                    event = departure_list.pop(0)
+                else:
+                    event = event_list.pop(0)
+            else:
+                event = event_list.pop(0)
             if event[0] == "A":
                 if num_elem_queue < K:
                     # Queue free
@@ -221,26 +228,9 @@ class Lab1():
                         # Queue with packets
                         departure_timestamp = last_departure_time + event[2]
                     num_elem_queue+=1
-                    index = 0
-                    if(event_list):
-
-
-                        if(event_list[0][1] > departure_timestamp):
-                            index = 0
-                        else:
-                            for i in range(len(event_list)):
-                                in_list = event_list[i][1]
-                                in_list2 = event_list[i+1][1]
-
-                                if in_list <= departure_timestamp and departure_timestamp <= in_list2:
-                                    index = i+1
-                                    break                   
-                        event_list.insert(index, ["D",departure_timestamp])
-                    
-                    
-                    # event_list.append(["D",departure_timestamp])
-                    # event_list = sorted(event_list, key=lambda x: x[1])
-                    
+                    departure_list.append(["D", departure_timestamp])
+                    departure_list.sort()
+                   
                 else:
                     # Queue full
                     num_packet_lost+= 1
@@ -298,14 +288,6 @@ class Lab1():
         expected_mean = 1/lambda_param
         return -expected_mean*math.log(1-random.random())
 
-    # def m_m_1_k_queue(self):
-    #     pass
-    #     # TODO: FUNCION QUEUE LLENA
-    #     # TODO: CHECK SI ARRIVAL LOSS OR NOT
-
-    # # def __add_event(self, type, timestamp):
-
-    # #     self.__event_list.append((type, timestamp))
 
 
 def generate_graph_points(avg_packet_length, trans_rate, t):
