@@ -354,12 +354,42 @@ class Lab1():
         return [i, list_m_m_1[type_info]]
 
 
+def check_T(avg_len, trans_rate, lambda_par, T):
+
+    a = Lab1()
+    T_counter = 1
+    percentage = 0.05
+    dif_count_E = 100
+    dif_count_pidle = 100
+    final_T = 1
+
+    gate = True
 
 
+    while gate:
+        E, pidle = a.m_m_1_queue(avg_len, trans_rate, lambda_par, T_counter*T)
+        E2, pidle2 = a.m_m_1_queue(avg_len, trans_rate, lambda_par, (T_counter+1)*T)
+        # print("E is the folowing: " + str(E))
+        # print("P is the folowing: " + str(pidle))
+        # print("\n")
+        # print("E2 is the folowing: " + str(E2))
+        # print("P2 is the folowing: " + str(pidle2))
 
-
-
-
+        difference_E = abs(E-E2)
+        difference_pidle = abs(pidle-pidle2)
+        if(difference_E <= E*percentage and difference_pidle <= pidle*percentage):
+            print(T_counter+1)
+            if dif_count_E > difference_E and dif_count_pidle > difference_pidle:
+                final_T = T_counter+1
+                dif_count_E = difference_E
+                dif_count_pidle = difference_pidle
+            else:
+                gate = False
+        T_counter += 1
+        # print("Final T: " + str(final_T))
+    
+    return final_T
+    
 if __name__ == "__main__":
     a = Lab1()
     lambda_par = 75
@@ -368,11 +398,22 @@ if __name__ == "__main__":
     T = 1_000
 
     # RUNNING THE LAB
-    # QUESTION 1
-    #a.question1(lambda_par)
+    """# QUESTION 1
+    a.question1(lambda_par)
 
     # INFINITE QUEUE
-    a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,T)
+    print("QUESTION 2:\n")
+    X = check_T(avg_packet_length, trans_rate, lambda_par, T)
+    print("\tThe Final T will be: " + str(T*X))
+
+    print("QUESTION3:\n")
+    a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,2*T)
+
+    # For p=1.2
+    E, pidle = a.m_m_1_queue(avg_packet_length, trans_rate, trans_rate * 1.2 / avg_packet_length, 2*T)
+    print("QUESTION 4:\n")
+    print("\tFor p = 1.2, the value of E[N] = "+ str(E) + " and the value of pidle =" + str(pidle))"""
+
 
     # FINITE
     #a.m_m_1_k_queue(avg_packet_length,trans_rate,lambda_par,T,10)

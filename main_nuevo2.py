@@ -7,6 +7,9 @@ In this module we will write the main code
 """
 
 # Imports
+import matplotlib.pyplot as plt
+
+
 import math
 import random
 import numpy as np
@@ -160,11 +163,9 @@ class Lab1():
         num_observers = 0
         transmission_times = []
         arrival_list = []
-        lost_packets_list=[]
         departure_list = []
         observer_list = []
         event_list = []
-        result_list = []
 
         # * Arrival
         # we generate the arrivals
@@ -198,88 +199,48 @@ class Lab1():
 
         # * Departure
         # Declaration of variables
-        event_list2 = []
+        
         last_departure_time = 0
         num_elem_queue = 0
         total_num_packs_queue = 0
         total_observer_idles = 0
-
-        print(len(event_list))
-        
-        # FIXME: HAY QUE AÑADIR QUE NO ACABE SI QUEDAN DEPARTURES
-        """while event_list!=[]:
-            if(departure_list):
-                if (departure_list[0][1]<event_list[0][1]):
-                    event = departure_list.pop(0)
-                else:
-                    event = event_list.pop(0)
-            else:
-                event = event_list.pop(0)
-            if event[0] == "A":
-                if num_elem_queue < K:
-                    # Queue free
-                    num_arrival += 1
-                    #departure_timestamp = 0
-                    if num_elem_queue == 0:
-                        # Queue is empty
-                        departure_timestamp = event[1] + event[2]
-                    else:
-                        # Queue with packets
-                        
-                        departure_timestamp = last_departure_time + event[2]
-                    num_elem_queue+=1
-                    departure_list.append(["D", departure_timestamp])
-                    departure_list.sort()
-                   
-                else:
-                    # Queue full
-                    num_packet_lost+= 1
-            elif event[0] == "D":
-                num_departed+=1
-                last_departure_time=event[1]
-                num_elem_queue -= 1
-
-            elif event[0] == "O":
-                num_observers += 1
-                # We record the num of packets that are currently on the queue
-                total_num_packs_queue += (num_arrival-num_departed)
-                if num_arrival == num_departed:
-                    total_observer_idles += 1"""
         
         end_loop = len(arrival_list)
         i = 0
+        lost_packets = 0
 
         while i < end_loop:
-            if(departure_list):
-                if (departure_list[0][1]<event_list[i][1]):
-                    event = departure_list.pop(0)
-                else:
-                    event = event_list[i]
-                    i += 1
+            if num_elem_queue == 10:
+                print("full queue")
+            if(departure_list and departure_list[0][1] <= event_list[i][1]):
+                event = departure_list[0]
+                departure_list.pop(0)
             else:
                 event = event_list[i]
-                i+= 1
-
+                i += 1
+            
+            # print("THIS IS THE EVENT")
+            # print(event)
             if event[0] == "A":
                 if num_elem_queue < K:
                     # Queue free
                     num_arrival += 1
+                    num_elem_queue += 1
                     #departure_timestamp = 0
                     if num_elem_queue == 0:
                         # Queue is empty
                         departure_timestamp = event[1] + event[2]
                     else:
                         # Queue with packets
-                        
                         departure_timestamp = last_departure_time + event[2]
-                    num_elem_queue+=1
+                        last_departure_time = departure_timestamp
                     departure_list.append(["D", departure_timestamp])
-                    departure_list.sort()
-                   
-                
+                    departure_list.sort()     
+                elif num_elem_queue >= K:
+                    print("Lost packet")
+                    lost_packets += 1           
             elif event[0] == "D":
                 num_departed+=1
-                last_departure_time=event[1]
                 num_elem_queue -= 1
 
             elif event[0] == "O":
@@ -288,14 +249,15 @@ class Lab1():
                 total_num_packs_queue += (num_arrival-num_departed)
                 if num_arrival == num_departed:
                     total_observer_idles += 1
-
-        print("total_num_packs = "+ str(total_num_packs_queue))
-        print("idles total= " +  str(total_observer_idles))
-        print("Total observers= "+str(num_observers))
-        print("Total arrivals= "+str(num_arrival))
-        print("Total departures= "+str(num_departed))
-        print("total packets lost"+str(num_departed/num_arrival))
-        return total_num_packs_queue/num_observers, total_observer_idles/num_observers , num_departed/num_arrival
+            # if num_elem_queue == 10:
+            #     print("total_num_packs = "+ str(total_num_packs_queue))
+            #     print("idles total= " +  str(total_observer_idles))
+            #     print("Total observers= "+str(num_observers))
+            #     print("Total arrivals= "+str(num_arrival))
+            #     print("Total departures= "+str(num_departed))
+            #     print("total packets lost"+str(lost_packets))
+            #     print("\n")
+        return total_num_packs_queue/num_observers, total_observer_idles/num_observers , lost_packets/num_arrival
 
     def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
         aux_list = []
@@ -402,6 +364,40 @@ def checkT_infinite():
     print("Does 2T-3T enter in the difference? " + str(inside_first2))
 
 
+def check_T2(avg_len, trans_rate, lambda_par, T, K):
+
+    a = Lab1()
+    T_counter = 1
+    percentage = 0.05
+    dif_count_E = 100
+    dif_count_pidle = 100
+    dif_count_ploss = 100
+    final_T = 1
+
+
+    for i in range(5):
+        E, pidle, ploss = a.m_m_1_k_queue(avg_len, trans_rate, lambda_par, T_counter*T, K)
+        E2, pidle2, ploss2= a.m_m_1_k_queue(avg_len, trans_rate, lambda_par, (T_counter+1)*T, K)
+        print("E is the folowing: " + str(E))
+        print("P is the folowing: " + str(pidle))
+        print("\n")
+        print("E2 is the folowing: " + str(E2))
+        print("P2 is the folowing: " + str(pidle2))
+
+        difference_E = abs(E-E2)
+        difference_pidle = abs(pidle-pidle2)
+        difference_ploss = abs(ploss-ploss2)
+        if(difference_E <= E*percentage and difference_pidle <= pidle*percentage and difference_ploss <= ploss*percentage):
+            if dif_count_E > difference_E and dif_count_pidle > difference_pidle and dif_count_ploss > difference_ploss:
+                final_T = T_counter+1
+                dif_count_E = difference_E
+                dif_count_pidle = difference_pidle
+                dif_count_ploss = difference_ploss
+        T_counter += 1
+        print("Final T: " + str(final_T))
+    
+    return final_T
+
 if __name__ == "__main__":
     a = Lab1()
     num_packets = 1_000
@@ -409,12 +405,67 @@ if __name__ == "__main__":
     trans_rate = 1_000_000
     avg_packet_length = 2_000
     T = 1000
-    # print(a.m_m_1_k_queue(avg_packet_length, trans_rate, lambda_par, T, 10))
+    print(a.m_m_1_k_queue(avg_packet_length, trans_rate, trans_rate * 0.5 / avg_packet_length, 20*T, 10))
     # a.question1(lambda_par)
     # print(generate_graph_points(avg_packet_length, trans_rate, T*2))
      # FINITE
-    # k = [10, 25, 50]
     k = [10, 25, 50]
-    for element in k:
-        # en este print en realidad devuelve p, E(N), pidle, ploss
-        print(generate_graph_points2(2000, trans_rate, T, element))
+    # check_T2(avg_packet_length, trans_rate, lambda_par, T, 10)
+    # k = [10]
+    # result1 = []
+    # result2 = []
+    # result3 = []
+    # for element in k:
+    #     # en este print en realidad devuelve p, E(N), pidle, ploss
+    #     result = generate_graph_points2(2000, trans_rate, 2*T, element)
+    #     print(result)
+    #     if element == 10:
+    #         result1 = result
+    #     if element == 25:
+    #         result2 = result
+    #     if element == 50:
+    #         result3 = result
+        
+# generate_graph_points2(2000, trans_rate, 2*T, element)
+    
+    # print("Result1")
+    # for e in result1:
+    #     print(str(e[0])+ "," + str(e[1]))
+    # print("\n")
+    # print("Result2")
+    # for e in result2:
+    #     print(str(e[0])+ "," + str(e[1]))
+    # print("\n")
+
+    # print("Result3")
+    # for e in result3:
+    #     print(str(e[0])+ "," + str(e[1]))
+    # print("\n")
+
+    # Define your data points
+
+
+"""# Define your data points for Result1, Result2, and Result3
+x_values = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4]
+
+y_values1 = [0.0, 0.0, 0.0, 0.0, 7.995383998304978e-06, 0.027449163659232393, 3.8680827460905682, 5.770172238905905, 6.9021545776462565, 7.638722305264195]
+y_values2 = [0.0, 4.5968190012511345e-05, 3.0827566009525715e-05, 3.009193084874291e-06, 0.00023024363236613261, 0.598540032187889, 16.257790764052082, 19.95066246321732, 21.739328125288566, 22.444399210820873]
+y_values3 = [0.0, 1.4027100357891446e-05, 8.904124835830199e-05, 0.02093717496724345, 0.0, 7.54963796877631, 39.965191435661204, 44.93933536860017, 46.632760497660016, 47.47673225800364]
+
+# Create the graph
+plt.figure(figsize=(10, 6))
+
+# Plot the three lines
+plt.plot(x_values, y_values1, marker='o', linestyle='-', label='Result1')
+plt.plot(x_values, y_values2, marker='s', linestyle='--', label='Result2')
+plt.plot(x_values, y_values3, marker='^', linestyle=':', label='Result3')
+
+# Set titles, labels, and legend
+plt.title('Three Results Comparison')
+plt.xlabel('X-Axis Label')
+plt.ylabel('Y-Axis Label')
+plt.grid(True)
+plt.legend()
+
+# Display the graph
+plt.show()"""
