@@ -210,11 +210,11 @@ class Lab1():
         lost_packets = 0
 
         while i < end_loop:
-            if num_elem_queue == 10:
-                print("full queue")
+            # if num_elem_queue == 10:
+            #     print("full queue")
             if(departure_list and departure_list[0][1] <= event_list[i][1]):
-                event = departure_list[0]
-                departure_list.pop(0)
+                event = departure_list.pop(0)
+                
             else:
                 event = event_list[i]
                 i += 1
@@ -222,7 +222,7 @@ class Lab1():
             # print("THIS IS THE EVENT")
             # print(event)
             if event[0] == "A":
-                if num_elem_queue < K:
+                if num_elem_queue < K+1:
                     # Queue free
                     num_arrival += 1
                     num_elem_queue += 1
@@ -234,8 +234,9 @@ class Lab1():
                         # Queue with packets
                         departure_timestamp = last_departure_time + event[2]
                         last_departure_time = departure_timestamp
-                    departure_list.append(["D", departure_timestamp])
-                    departure_list.sort()     
+
+                    departure_list.append(["D", departure_timestamp])    
+                
                 elif num_elem_queue >= K:
                     print("Lost packet")
                     lost_packets += 1           
@@ -257,7 +258,7 @@ class Lab1():
             #     print("Total departures= "+str(num_departed))
             #     print("total packets lost"+str(lost_packets))
             #     print("\n")
-        return total_num_packs_queue/num_observers, total_observer_idles/num_observers , lost_packets/num_arrival
+        return total_num_packs_queue/num_observers, total_observer_idles/num_observers , 1 - (num_departed/num_arrival)
 
     def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
         aux_list = []
@@ -405,7 +406,7 @@ if __name__ == "__main__":
     trans_rate = 1_000_000
     avg_packet_length = 2_000
     T = 1000
-    print(a.m_m_1_k_queue(avg_packet_length, trans_rate, trans_rate * 0.5 / avg_packet_length, 20*T, 10))
+    # print(a.m_m_1_k_queue(avg_packet_length, trans_rate, trans_rate * 0.5 / avg_packet_length, 2*T, 10))
     # a.question1(lambda_par)
     # print(generate_graph_points(avg_packet_length, trans_rate, T*2))
      # FINITE
@@ -417,7 +418,7 @@ if __name__ == "__main__":
     # result3 = []
     # for element in k:
     #     # en este print en realidad devuelve p, E(N), pidle, ploss
-    #     result = generate_graph_points2(2000, trans_rate, 2*T, element)
+    print(generate_graph_points2(2000, trans_rate, 2*T, 10))
     #     print(result)
     #     if element == 10:
     #         result1 = result
@@ -445,8 +446,8 @@ if __name__ == "__main__":
     # Define your data points
 
 
-"""# Define your data points for Result1, Result2, and Result3
-x_values = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4]
+# Define your data points for Result1, Result2, and Result3
+"""x_values = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4]
 
 y_values1 = [0.0, 0.0, 0.0, 0.0, 7.995383998304978e-06, 0.027449163659232393, 3.8680827460905682, 5.770172238905905, 6.9021545776462565, 7.638722305264195]
 y_values2 = [0.0, 4.5968190012511345e-05, 3.0827566009525715e-05, 3.009193084874291e-06, 0.00023024363236613261, 0.598540032187889, 16.257790764052082, 19.95066246321732, 21.739328125288566, 22.444399210820873]
