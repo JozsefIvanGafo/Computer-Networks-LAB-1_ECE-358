@@ -56,7 +56,7 @@ class Lab1():
         print(f"Variance of generated random variables: {variance}")
         print(f"Expected variance for λ=75: {expected_variance}")
 
-    def m_m_1_queue(self, avg_len: int, trans_rate: int, lambda_par: int, T: int) -> list:
+    # def m_m_1_queue(self, avg_len: int, trans_rate: int, lambda_par: int, T: int) -> list:
         """
         Build your simulator for this queue and explain in words what you have done. Show your code in the report. In 
         particular, define your variables. Should there be a need, draw diagrams to show your program structure. Explain how you 
@@ -66,7 +66,7 @@ class Lab1():
         @return: None
         """
         # ! Declaration of variables for the m_m_1 queue
-        num_arrival = 0
+        """num_arrival = 0
         num_departed = 0
         num_observers = 0
         transmission_times = []
@@ -144,9 +144,9 @@ class Lab1():
                     total_observer_idles += 1
 
        
-        return total_num_packs_queue/num_observers, total_observer_idles/num_observers
+        return total_num_packs_queue/num_observers, total_observer_idles/num_observers"""
 
-    def m_m_1_k_queue(self,avg_len:int, trans_rate:int,lambda_par:int,T:int,K:int)->[float,float,float]:
+    def m_m_1_k_queue(self, avg_len:int, trans_rate:int,lambda_par:int,T:int,K_num:int)->[float,float,float]:
         """
         This method is in charge of simulating the m_m_1_k queue
         @param avg_len: This integer represent the average length packet in bits
@@ -156,116 +156,94 @@ class Lab1():
         @param K: This integer represent the max number of packets that a queue can hold
         @return a list: It returns a list of floats where the first element represent E[n],p_idle and p_loss
         """
+        list_arrivals = []
+        list_arrivals = self.__generate_mm1_arr_obs(lambda_par, T)
 
-        # ! Declaration of variables for the m_m_1_k queue
-        num_arrival = 0
-        num_departed = 0
-        num_observers = 0
-        transmission_times = []
-        arrival_list = []
-        departure_list = []
-        observer_list = []
-        event_list = []
+        list_observers = []
+        list_observers  = self.__generate_mm1_arr_obs(lambda_par*5, T)
 
-        # * Arrival
-        # we generate the arrivals
-        arrival_list = self.__generate_mm1_arr_obs(lambda_par, T)
-        arrival_list.sort()
-        
-        
-        # *  Observations
-        # Now we add the observers event
-        observer_list = self.__generate_mm1_arr_obs(lambda_par, T, 5)
+        list_events = []
+        for e in list_arrivals:
+            list_events.append(["A",e])
 
-        # * Service Time
-        length_packets = []
-        length_arrival = len(arrival_list)
-        length_packets = [self.__generate_exp_distribution(1/avg_len) for _ in range(length_arrival)]
-        for packet in length_packets:
-            # How much time it takes to process each packet
-            transmission_times.append(packet / trans_rate)
+        for e in list_observers:
+            list_events.append(["O",e])
         
-        for i in range(len(arrival_list)):
-            arrival_list[i]= [arrival_list[i],transmission_times[i]]
-            
-        # * We mix all the list and sort them into event_list     
+        list_events = sorted(list_events, key=lambda x: x[1])
         
-        for arrival_time in arrival_list:
-            event_list.append(["A", arrival_time[0], arrival_time[1]])
-        for observer_time in observer_list:
-            event_list.append(["O", observer_time])
-        
-        event_list = sorted(event_list, key=lambda x: x[1])
 
-        # * Departure
-        # Declaration of variables
-        
-        last_departure_time = 0
         num_elem_queue = 0
-        total_num_packs_queue = 0
-        total_observer_idles = 0
-        
-        end_loop = len(arrival_list)
+        n_arrivals = 0
+        n_observers = 0
+        n_departures = 0
+
+        total_idles = 0
+        total_packs_queue = 0
+
+        last_departure = 0
+        departure_list = []
+
+
         i = 0
-        lost_packets = 0
-
-        while i < end_loop:
-            # if num_elem_queue == 10:
-            #     print("full queue")
-            if(departure_list and departure_list[0][1] <= event_list[i][1]):
-                event = departure_list.pop(0)
-                
+        while i < len(list_events) or departure_list != []:
+            if(i == len(list_events)):
+                for e in departure_list:
+                    departure_list.pop(0)
+                    n_departures += 1
+                    num_elem_queue -= 1
             else:
-                event = event_list[i]
-                i += 1
-            
-            # print("THIS IS THE EVENT")
-            # print(event)
-            if event[0] == "A":
-                if num_elem_queue < K+1:
-                    # Queue free
-                    num_arrival += 1
-                    num_elem_queue += 1
-                    #departure_timestamp = 0
-                    if num_elem_queue == 0:
-                        # Queue is empty
-                        departure_timestamp = event[1] + event[2]
+                if(departure_list != []):
+                    
+                    if(departure_list[0][1] < list_events[i][1]):
+                        event = departure_list.pop(0)
                     else:
-                        # Queue with packets
-                        departure_timestamp = last_departure_time + event[2]
-                        last_departure_time = departure_timestamp
+                        event = list_events[i]
+                else:
+                    event = list_events[i]
+                if(event[0] == "A"):
+                    if num_elem_queue < K_num:
+                        n_arrivals += 1
+                        arrival_time = event[1]
+                        length_packet = self.__generate_exp_distribution(1/avg_len)
+                        service_time = length_packet/trans_rate
+                        
+                        if num_elem_queue == 0:
+                            departure_time = arrival_time + service_time
+                        elif num_elem_queue < K_num:
+                            departure_time = last_departure + service_time
+                        departure_list.append(["D", departure_time])
+                        last_departure = departure_time
+                        num_elem_queue += 1
+                    i += 1
 
-                    departure_list.append(["D", departure_timestamp])    
-                
-                elif num_elem_queue >= K:
-                    print("Lost packet")
-                    lost_packets += 1           
-            elif event[0] == "D":
-                num_departed+=1
-                num_elem_queue -= 1
+                elif(event[0] == "O"):
+                    n_observers += 1
+                    total_packs_queue += (n_arrivals - n_departures)
+                    if n_arrivals == n_departures:
+                        total_idles += 1
+                    i+= 1
 
-            elif event[0] == "O":
-                num_observers += 1
-                # We record the num of packets that are currently on the queue
-                total_num_packs_queue += (num_arrival-num_departed)
-                if num_arrival == num_departed:
-                    total_observer_idles += 1
-            # if num_elem_queue == 10:
-            #     print("total_num_packs = "+ str(total_num_packs_queue))
-            #     print("idles total= " +  str(total_observer_idles))
-            #     print("Total observers= "+str(num_observers))
-            #     print("Total arrivals= "+str(num_arrival))
-            #     print("Total departures= "+str(num_departed))
-            #     print("total packets lost"+str(lost_packets))
-            #     print("\n")
-        return total_num_packs_queue/num_observers, total_observer_idles/num_observers , 1 - (num_departed/num_arrival)
+                elif(event[0] == "D"):
+                    n_departures += 1
+                    num_elem_queue -= 1
+            
+        return total_packs_queue/n_observers, total_idles/n_observers, 1 - (n_departures/n_arrivals)
+        
+        
+        
+            
+              
 
-    def __generate_mm1_arr_obs(self, lambda_par, T, steps=1):
+
+
+
+
+    def __generate_mm1_arr_obs(self, lambda_par, T):
         aux_list = []
         simulation_time = 0
         while simulation_time < T:
             arrival_timestamp = self.__generate_exp_distribution(
-                lambda_par*steps)+simulation_time
+                lambda_par)+simulation_time
             aux_list.append(arrival_timestamp)
             simulation_time = arrival_timestamp
         return aux_list
@@ -300,10 +278,10 @@ def generate_graph_points(avg_packet_length, trans_rate, t):
         i += step
     return result
 
-def generate_graph_points2(avg_packet_length, trans_rate, t, k):
+"""def generate_graph_points2(avg_packet_length, trans_rate, t, k):
     step = 0.1
     start = 0.5
-    end = 1.5
+    end = 1.6
 
     result = []
 
@@ -315,7 +293,7 @@ def generate_graph_points2(avg_packet_length, trans_rate, t, k):
 
         result.append([i, list_m_m_1[0], list_m_m_1[1], list_m_m_1[2]])
         i += step
-    return result
+    return result"""
 
 def checkT_infinite():
     sol_T = a.m_m_1_queue(avg_packet_length, trans_rate, lambda_par, T)
@@ -401,49 +379,16 @@ def check_T2(avg_len, trans_rate, lambda_par, T, K):
 
 if __name__ == "__main__":
     a = Lab1()
-    num_packets = 1_000
     lambda_par = 75
     trans_rate = 1_000_000
     avg_packet_length = 2_000
     T = 1000
-    # print(a.m_m_1_k_queue(avg_packet_length, trans_rate, trans_rate * 0.5 / avg_packet_length, 2*T, 10))
-    # a.question1(lambda_par)
-    # print(generate_graph_points(avg_packet_length, trans_rate, T*2))
-     # FINITE
-    k = [10, 25, 50]
-    # check_T2(avg_packet_length, trans_rate, lambda_par, T, 10)
-    # k = [10]
-    # result1 = []
-    # result2 = []
-    # result3 = []
-    # for element in k:
-    #     # en este print en realidad devuelve p, E(N), pidle, ploss
-    print(generate_graph_points2(2000, trans_rate, 2*T, 10))
-    #     print(result)
-    #     if element == 10:
-    #         result1 = result
-    #     if element == 25:
-    #         result2 = result
-    #     if element == 50:
-    #         result3 = result
-        
-# generate_graph_points2(2000, trans_rate, 2*T, element)
     
-    # print("Result1")
-    # for e in result1:
-    #     print(str(e[0])+ "," + str(e[1]))
-    # print("\n")
-    # print("Result2")
-    # for e in result2:
-    #     print(str(e[0])+ "," + str(e[1]))
-    # print("\n")
+    k = [10, 25, 50]
+    a.m_m_1_k_queue(2000, 1_000_000, trans_rate * 0.5 / avg_packet_length,2000, 10)
+    # print(generate_graph_points2(2000, 1_000_000, 2000, 10))
 
-    # print("Result3")
-    # for e in result3:
-    #     print(str(e[0])+ "," + str(e[1]))
-    # print("\n")
-
-    # Define your data points
+    
 
 
 # Define your data points for Result1, Result2, and Result3
