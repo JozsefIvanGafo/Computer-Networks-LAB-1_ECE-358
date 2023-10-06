@@ -182,12 +182,12 @@ class Lab1():
 
         last_departure = 0
         departure_list = []
-
+        lost_packets = 0
 
         i = 0
         while i < len(list_events) or departure_list != []:
             if(i == len(list_events)):
-                for e in departure_list:
+                for x in range(len(departure_list)):
                     departure_list.pop(0)
                     n_departures += 1
                     num_elem_queue -= 1
@@ -214,7 +214,10 @@ class Lab1():
                         departure_list.append(["D", departure_time])
                         last_departure = departure_time
                         num_elem_queue += 1
-                    i += 1
+                    else:
+                        lost_packets += 1
+                    i+= 1
+                        
 
                 elif(event[0] == "O"):
                     n_observers += 1
@@ -226,8 +229,7 @@ class Lab1():
                 elif(event[0] == "D"):
                     n_departures += 1
                     num_elem_queue -= 1
-            
-        return total_packs_queue/n_observers, total_idles/n_observers, 1 - (n_departures/n_arrivals)
+        return total_packs_queue/n_observers, total_idles/n_observers, lost_packets/n_arrivals
         
         
         
@@ -385,9 +387,9 @@ if __name__ == "__main__":
     T = 1000
     
     k = [10, 25, 50]
-    a.m_m_1_k_queue(2000, 1_000_000, trans_rate * 0.5 / avg_packet_length,2000, 10)
+    # print(a.m_m_1_k_queue(2000, 1_000_000, trans_rate * 0.5 / avg_packet_length,2000, 10))
     # print(generate_graph_points2(2000, 1_000_000, 2000, 10))
-
+    check_T2(avg_packet_length, trans_rate, trans_rate * 0.5 / avg_packet_length, T, 10)
     
 
 

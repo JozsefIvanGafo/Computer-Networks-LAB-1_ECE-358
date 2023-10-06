@@ -189,7 +189,6 @@ class Lab1():
         expected_mean = 1/lambda_param
         return -expected_mean*math.log(1-random.random())
 
-    #FIXME: # ! FIX
     def m_m_1_k_queue(self, avg_len:int, trans_rate:int,lambda_par:int,T:int,K_num:int)->[float,float,float]:
         """
         This method is in charge of simulating the m_m_1_k queue
@@ -200,12 +199,30 @@ class Lab1():
         @param K: This integer represent the max number of packets that a queue can hold
         @return a list: It returns a list of floats where the first element represent E[n],p_idle and p_loss
         """
+        #We declare variables 
+        num_elem_queue = 0
+        n_arrivals = 0
+        n_observers = 0
+        n_departures = 0
+
+        total_packs_queue = 0
+        lost_packets = 0
+
+        last_departure = 0
+        departure_list = []
+
+        
+
+        # Generating arrivals
         list_arrivals = []
         list_arrivals = self.__generate_mm1_arr_obs(lambda_par, T)
 
+        #Generating the observers
         list_observers = []
         list_observers  = self.__generate_mm1_arr_obs(lambda_par*5, T)
-
+        
+        #We add event on event_list  where in pos 0 we define the type ("A"=arrival, "O"=observers)
+        #in pos 1 we have the time_stamp of the event
         list_events = []
         for e in list_arrivals:
             list_events.append(["A",e])
@@ -213,65 +230,73 @@ class Lab1():
         for e in list_observers:
             list_events.append(["O",e])
         
+        #we sort the evnt list by event arrival time
         list_events = sorted(list_events, key=lambda x: x[1])
         
+        
 
-        num_elem_queue = 0
-        n_arrivals = 0
-        n_observers = 0
-        n_departures = 0
-
-        total_idles = 0
-        total_packs_queue = 0
-
-        last_departure = 0
-        departure_list = []
-
-
+        #Loop where we will calculate the departure of the arrivals 
+        #calculate the observers stadistics
         i = 0
         while i < len(list_events) or departure_list != []:
             if(i == len(list_events)):
-                for e in departure_list:
+                # If list_events has finished but we still have departures
+                for x in range(len(departure_list)):
                     departure_list.pop(0)
                     n_departures += 1
                     num_elem_queue -= 1
             else:
+                # Assign current event
                 if(departure_list != []):
-                    
+                    # If there are departures
                     if(departure_list[0][1] < list_events[i][1]):
+                        # Check if it goes an observer, arrival or departure
                         event = departure_list.pop(0)
                     else:
                         event = list_events[i]
                 else:
                     event = list_events[i]
+
                 if(event[0] == "A"):
+                    # ARRIVAL
                     if num_elem_queue < K_num:
+                        # QUEUE NOT FULL
                         n_arrivals += 1
+                        # Generate service time
                         arrival_time = event[1]
                         length_packet = self.__generate_exp_distribution(1/avg_len)
                         service_time = length_packet/trans_rate
                         
                         if num_elem_queue == 0:
+                            # QUEUE EMPTY
                             departure_time = arrival_time + service_time
                         elif num_elem_queue < K_num:
+                            # QUEUE WITH ELEMENTS
                             departure_time = last_departure + service_time
+                        
+                        # Adds the new departure time
                         departure_list.append(["D", departure_time])
+                        # Reset the last departure time
                         last_departure = departure_time
                         num_elem_queue += 1
-                    i += 1
+                    else:
+                        # QUEUE NOT FULL
+                        lost_packets += 1
+                    i+= 1
+                        
 
                 elif(event[0] == "O"):
+                    # OBSERVERS
                     n_observers += 1
                     total_packs_queue += (n_arrivals - n_departures)
-                    if n_arrivals == n_departures:
-                        total_idles += 1
                     i+= 1
 
                 elif(event[0] == "D"):
+                    # DEPARTURE
                     n_departures += 1
                     num_elem_queue -= 1
-            
-        return total_packs_queue/n_observers, total_idles/n_observers, 1 - (n_departures/n_arrivals)
+
+        return total_packs_queue/n_observers, lost_packets/n_arrivals
 
 
     
@@ -326,6 +351,7 @@ class Lab1():
         # Save the figure as an image named "exercise_3.png" in the same folder as the script
         image_path = os.path.join(script_directory, 'exercise_3.png')
         plt.savefig(image_path)
+        plt.close()
 
     def create_graph_for_m_m_1_k_queue(self, avg_len, trans_rate, T):
         #Define iteration variables
@@ -350,10 +376,10 @@ class Lab1():
                 #We run the function on the core
                 pool_list = pool.starmap(self.generate_points2, input_data)
                 result.append(pool_list)
-            print(result)
             #we save append it to y (to save the result and later create the graphs)
-            #pos 0 is for E[n]  ,pos 1 is for p_idle and pos 2 is p_loss
-            y.append([[point[1][0] for point in result[0]],[point[1][2]for point in result[0]] ])
+            #pos 0 is for E[n]  ,pos 1  is p_loss
+            print(result)
+            y.append([[point[1][0] for point in result[0]],[point[1][1]for point in result[0]] ])
             
             print("Finished generating points for graph mm1 queue for k= %i"%(k))
 
@@ -387,6 +413,7 @@ class Lab1():
         # Save the figure as an image named "exercise_3.png" in the same folder as the script
         image_path = os.path.join(script_directory, 'exercise_6.png')
         plt.savefig(image_path)
+        plt.close()
         
 
     def generate_points2(self,i,avg_len,trans_rate,lambda_par,T,K):
@@ -396,41 +423,59 @@ class Lab1():
         return [i, list_m_m_1]
 
 def check_T(avg_len, trans_rate, lambda_par, T):
-
     a = Lab1()
     T_counter = 1
     percentage = 0.05
     dif_count_E = 100
     dif_count_pidle = 100
-    final_T = 1
-
+    list_T = []
     gate = True
-
-
     while gate:
         E, pidle = a.m_m_1_queue(avg_len, trans_rate, lambda_par, T_counter*T)
         E2, pidle2 = a.m_m_1_queue(avg_len, trans_rate, lambda_par, (T_counter+1)*T)
-        # print("E is the folowing: " + str(E))
-        # print("P is the folowing: " + str(pidle))
-        # print("\n")
-        # print("E2 is the folowing: " + str(E2))
-        # print("P2 is the folowing: " + str(pidle2))
-
         difference_E = abs(E-E2)
         difference_pidle = abs(pidle-pidle2)
+        if(len(list_T) == 2):
+            return min(list_T[0], list_T[1]) * T
         if(difference_E <= E*percentage and difference_pidle <= pidle*percentage):
-            print(T_counter+1)
             if dif_count_E > difference_E and dif_count_pidle > difference_pidle:
-                final_T = T_counter+1
+                list_T.append(T_counter+1)
                 dif_count_E = difference_E
                 dif_count_pidle = difference_pidle
             else:
                 gate = False
+        else:
+            gate = False 
         T_counter += 1
-        # print("Final T: " + str(final_T))
+    return T
     
-    return final_T
-    
+def check_T2(avg_len, trans_rate, lambda_par, T, K):
+    a = Lab1()
+    T_counter = 1
+    percentage = 0.05
+    dif_count_E = 100
+    dif_count_ploss = 100
+    list_T = []
+    gate = True
+    while gate:
+        E, ploss = a.m_m_1_k_queue(avg_len, trans_rate, lambda_par, T_counter*T, K)
+        E2, ploss2 = a.m_m_1_k_queue(avg_len, trans_rate, lambda_par, (T_counter+1)*T, K)
+        difference_E = abs(E-E2)
+        difference_ploss = abs(ploss-ploss2)
+        if(len(list_T) == 2):
+            return min(list_T[0], list_T[1]) * T
+        if(difference_E <= E*percentage and difference_ploss <= ploss*percentage):
+            if dif_count_E > difference_E and dif_count_ploss > difference_ploss:
+                list_T.append(T_counter+1)
+                dif_count_E = difference_E
+                dif_count_ploss = difference_ploss
+            else:
+                gate = False
+        else:
+            gate = False 
+        T_counter += 1
+    return T
+
 if __name__ == "__main__":
     a = Lab1()
     lambda_par = 75
@@ -439,32 +484,41 @@ if __name__ == "__main__":
     T = 1_000
 
     # RUNNING THE LAB
-    #QUESTION 1
-    #a.question1(lambda_par)
-#
-    #### INFINITE QUEUE
-    #print("QUESTION 2:\n")
-    #X = check_T(avg_packet_length, trans_rate, lambda_par, T)
-    #print("\tThe Final T will be: " + str(T*X))
-#
-    #print("QUESTION3:\n")
-    #print("The graph will be generated in exercise3.png\n")
-    #a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,2*T)
-#
-    ### For p=1.2
-    #E, pidle = a.m_m_1_queue(avg_packet_length, trans_rate, trans_rate * 1.2 / avg_packet_length, 2*T)
-    #print("QUESTION 4:\n")
-    #print("\tFor p = 1.2, the value of E[N] = "+ str(E) + " and the value of pidle =" + str(pidle))
+    # QUESTION 1
+    a.question1(lambda_par)
+
+    # INFINITE QUEUE
+    # QUESTION 2
+    print("QUESTION 2:\n")
+    X = check_T(avg_packet_length, trans_rate, lambda_par, T)
+    print("\tThe Final T will be: " + str(X))
+
+    # QUESTION 3
+    print("QUESTION3:\n")
+    print("The graph will be generated in exercise3.png\n")
+    a.create_graph_for_m_m_1_queue(avg_packet_length,trans_rate,X)
+
+
+    # QUESTION 4
+    # For p=1.2
+    print("QUESTION 4:\n")
+    E, pidle = a.m_m_1_queue(avg_packet_length, trans_rate, trans_rate * 1.2 / avg_packet_length, 2*T)
+    print("\tFor p = 1.2, the value of E[N] = "+ str(E) + " and the value of pidle =" + str(pidle))
     
 
-    # FINITE
-    b = Lab1()
-    #Question 5
-    #print("QUESTION 5:\n")
-    #b.m_m_1_k_queue(avg_packet_length,trans_rate,lambda_par,T,10)
- 
+    # FINITE QUEUE
+    # QUESTION 5
+    print("QUESTION 5:\n")
+    trans_rate = 1_000_000
+    avg_packet_length = 2_000
+    T = 1000
+    k = [10, 25, 50]
+    X = check_T2(avg_packet_length, trans_rate, trans_rate * 0.5 / avg_packet_length, T, 10)
+    print("\tThe Final T will be: " + str(X))
+    
     #Question 6
     print ("QUESTION 6:\n")
     print("The graph will be generated in exercise_6.png \n")
-    b.create_graph_for_m_m_1_k_queue(avg_packet_length,trans_rate,T)
+    b = Lab1()
+    b.create_graph_for_m_m_1_k_queue(avg_packet_length,trans_rate,X)
 
