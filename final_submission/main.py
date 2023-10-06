@@ -140,8 +140,7 @@ class Lab1():
         total_observer_idles = 0
 
         for _, event in enumerate(event_list):
-            # for i in range(len(event_list)):
-            #event_type= event_list.pop(0)
+
             event_type = event[0]
             # Arrival
             if event_type == 'A':
@@ -314,14 +313,14 @@ class Lab1():
         end = 1.05
         # Graph for E[N]
         result=[]
-        print("generating points for graph mm1 queue")
+        print("Generating points for graph mm1 queue:")
         #cores=4
         with Pool() as pool:
             input_data = [(i, avg_len, trans_rate, trans_rate * i / avg_len, T)
                         for i in np.arange(start, end, step)]
             pool_list = pool.starmap(self.generate_point, input_data)
             print(pool_list)
-        print("Finished generating points for graph mm1 queue ")
+        print("\nFinished generating points for graph mm1 queue.\n")
         result.append(pool_list)
 
 
@@ -356,7 +355,7 @@ class Lab1():
     def create_graph_for_m_m_1_k_queue(self, avg_len, trans_rate, T):
         #Define iteration variables
         step = 0.1
-        start = 0.25
+        start = 0.5
         end = 1.6
 
         #list for the different K
@@ -365,7 +364,7 @@ class Lab1():
         #where we store the y results
         y=[]
         for _,k in enumerate(K_list):
-            print("generating points for graph mm1k queue for k= %i"%(k))
+            print("Generating points for graph mm1k queue for k= %i\n"%(k))
             #we create a result list to store all the point for a given k
             result=[]
             #We run a function per core in cpu (this is so the code run faster)
@@ -381,9 +380,8 @@ class Lab1():
             print(result)
             y.append([[point[1][0] for point in result[0]],[point[1][1]for point in result[0]] ])
             
-            print("Finished generating points for graph mm1 queue for k= %i"%(k))
+            print("\nFinished generating points for graph mm1 queue for k= %i\n"%(k))
 
-        #print(y)
         # We save the x points ( theya re the same for every k)
         x = [point[0] for point in result[0]]
         
